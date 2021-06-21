@@ -52,36 +52,25 @@ class NBC():
 
 
 class LR():
-    def __init__(self, lr=0.01, bs=1, steps=5000):
+    def __init__(self, lr=0.01, steps=5000):
         self.lr = lr
-        self.bs = bs
         self.steps = steps
-
-    def fit(self, X_t, y_t):
-        X_t = X_t.to_numpy()
-        y_t = y_t.to_numpy()
-        self.w = np.zeros((X_t.shape[1]))
-        self.b = 0
-        self.y_t = y_t
-        self.X_t = self.norm(X_t)
-        self.weights = np.zeros(X_t.shape[1])
-        for step in range(self.steps):
-            h = self.s(np.dot(self.X_t, self.weights))
-            self.weights -= self.lr * np.dot(self.X_t.T, (h - self.y_t)) / self.y_t.size
-        return self
 
     def s(self, z):
         return 1 / (1 + np.exp(-z))
 
-    def norm(self, X):
-        for i in range(X.shape[1]):
-            X = (X - X.mean(axis=0)/X.std(axis=0))
-        return X
+    def fit(self, X, y):
+        X = np.hstack((np.ones((X.shape[0], 1)), X))
+        self.coefs = np.zeros(X.shape[1])
 
-    def predict(self, X_p):
-        X_p = self.norm(X_p.to_numpy())
-        res = self.s(np.dot(X_p, self.w) + self.b)
-        return np.array([1 if i > 0.5 else 0 for i in res])
+        for _ in range(self.steps):
+            h = self.s(np.dot(X, self.coefs))
+            self.coefs -= self.lr * \
+                          np.dot(X.T, (h - y)) / y.size
+
+    def predict(self, X):
+        X = np.hstack((np.ones((X.shape[0], 1)), X))
+        return self.s(np.dot(X, self.coefs)).round()
 
 
 class Node:
